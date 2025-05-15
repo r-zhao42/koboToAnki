@@ -1,0 +1,10 @@
+<ol>{{ range $idx, $ent := .DefEntries }}<li> {{ $ent.FunctionalLabel }}: {{ if $ent.Pronunciations }}{{ (index $ent.Pronunciations 0).Pronunciation }}{{ end }}<\br>
+<ul>
+{{ range $ent.Defs }}
+	<li>{{ . }}</li>
+{{ end }}
+</ul>
+</li>
+{{ end }}
+</ol>
+
