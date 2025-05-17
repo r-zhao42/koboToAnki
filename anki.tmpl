@@ -1,10 +1,19 @@
-<ol>{{ range $idx, $ent := .DefEntries }}<li> {{ $ent.FunctionalLabel }}: {{ if $ent.Pronunciations }}{{ (index $ent.Pronunciations 0).Pronunciation }}{{ end }}<\br>
-<ul>
-{{ range $ent.Defs }}
-	<li>{{ . }}</li>
+{{ if .DefEntries }}
+<span> Stems:
+{{ range (index .DefEntries 0).Stems }}
+{{ . }}, 
 {{ end }}
-</ul>
-</li>
+</span>
 {{ end }}
+<ol>
+	{{ range $idx, $ent := .DefEntries }}
+	<li> {{ $ent.FunctionalLabel }}: {{ if $ent.Pronunciations }}{{ (index $ent.Pronunciations 0).Pronunciation }}{{
+		end }}
+		<ul>
+			{{ range $ent.Defs }}
+			<li>{{ . }}</li>
+			{{ end }}
+		</ul>
+	</li>
+	{{ end }}
 </ol>
-

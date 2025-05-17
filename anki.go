@@ -12,6 +12,9 @@ import (
 	"time"
 )
 
+const ANKICONNECT_URL = "http://127.0.0.1:8765"
+
+// Represents an Anki Notes
 type Note struct {
 	DeckName  string            `json:"deckName"`
 	ModelName string            `json:"modelName"`
@@ -31,8 +34,9 @@ type Result struct {
 	Error  *string `json:"error"`
 }
 
-func startAnki(path string) {
-	cmd := exec.Command("open", path)
+// Start Anki application and wait until ankiconnect server is up.
+func startAnki() {
+	cmd := exec.Command("open", "-a", "anki")
 	err := cmd.Start()
 	if err != nil {
 		panic("Error launching Anki")
@@ -44,6 +48,7 @@ func startAnki(path string) {
 	time.Sleep(2 * time.Second)
 }
 
+// Creates an Anki notes from a `dict.WordDef` object to be put in `deck` using the `model`
 func CreateNote(def dict.WordDef, deck string, model string) Note {
 	front := def.Word
 	audios := make([]Audio, 0)
@@ -54,9 +59,7 @@ func CreateNote(def dict.WordDef, deck string, model string) Note {
 			audios = append(audios, Audio{p.AudioUrl, path.Base(p.AudioUrl), []string{"Back"}})
 		}
 	}
-	fmt.Println(audios)
 
-	fmt.Println(def.DefEntries[0].Defs)
 	var back bytes.Buffer
 	tmpl, err := template.ParseFiles("anki.tmpl")
 	if err != nil {
@@ -84,6 +87,7 @@ func CreateNote(def dict.WordDef, deck string, model string) Note {
 	return note
 }
 
+// Converts a slice of `dict.WordDef` objects into a slice of `Notes` objects. The notes will be assigned to `deck` and created using the specified `model`
 func CreateNotes(defs []dict.WordDef, deck string, model string) []Note {
 	notes := make([]Note, 0)
 	for _, def := range defs {
@@ -93,13 +97,13 @@ func CreateNotes(defs []dict.WordDef, deck string, model string) []Note {
 	return notes
 }
 
+// Makes a request to the AnkiConnect API to the specified action. Returns the http.Response as the error
 func ankiRequest(action, params string) (*http.Response, error) {
 	fmt.Printf("Making Anki Request to %s\n", action)
-	url := "http://127.0.0.1:8765"
 	requestBody := fmt.Sprintf(`{"action": "%s", "version": 6, "params": %s}`, action, params)
 
 	var jsonStr = []byte(requestBody)
-	resp, err := http.Post(url, "application/json", bytes.NewBuffer(jsonStr))
+	resp, err := http.Post(ANKICONNECT_URL, "application/json", bytes.NewBuffer(jsonStr))
 
 	if err != nil {
 		return nil, err
@@ -108,12 +112,14 @@ func ankiRequest(action, params string) (*http.Response, error) {
 	return resp, nil
 }
 
+// Makes request to AnkiConnect API `createDeck` action to create a new deck. If the deck already exists, nothing will happen
 func AnkiCreateDeck(name string) {
 	ankiRequest("createDeck", fmt.Sprintf(`{"deck": "%s"}`, name))
 }
 
-func AnkiCanAddWordsToDeck(words []string, deck string, model string) []bool {
-
+// Create a set of dummy Anki notes to check if words can be added to `deck`. This allows us to
+// check which notes have already been added and reduce api calls to dictionary later
+func createDummyNotes(words []string, deck string, model string) []Note {
 	dummyNotes := make([]Note, 0)
 	for _, w := range words {
 		note := Note{
@@ -132,28 +138,46 @@ func AnkiCanAddWordsToDeck(words []string, deck string, model string) []bool {
 
 		dummyNotes = append(dummyNotes, note)
 	}
+	return dummyNotes
+}
+
+// Makes a request to AnkiConnect API `canAddNotes` action to check if words can be added to the specified `deck` with the specified `model`.
+// Returns a slice of
+func AnkiCanAddWordsToDeck(words []string, deck string, model string) []string {
+	dummyNotes := createDummyNotes(words, deck, model)
 
 	notesJson, err := json.Marshal(dummyNotes)
 	if err != nil {
 		panic(err)
 	}
+
 	resp, err := ankiRequest("canAddNotes", fmt.Sprintf(`{"notes": %s }`, notesJson))
 	defer resp.Body.Close()
-
 	if err != nil {
 		panic(err)
 	}
+
 	var result Result
 	err = json.NewDecoder(resp.Body).Decode(&result)
 	if err != nil {
 		panic(err)
 	}
+
 	if result.Error != nil {
 		panic(result.Error)
 	}
-	return result.Result
+
+	toAdd := make([]string, 0)
+	for i := range words {
+		if result.Result[i] {
+			toAdd = append(toAdd, words[i])
+		}
+	}
+
+	return toAdd
 }
 
+// Make call to Ankiconnect `addNotes` action
 func AddNotes(notes []Note) error {
 	notesJson, err := json.Marshal(notes)
 	if err != nil {

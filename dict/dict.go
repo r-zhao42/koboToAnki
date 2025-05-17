@@ -34,15 +34,6 @@ type DictAPI interface {
 	GetDefinitions(words []string) []string
 }
 
-func NewMerriam() (Merriam, error) {
-	api_key := os.Getenv("MERRIAM_API_KEY")
-	if api_key == "" {
-		return Merriam{}, errors.New("Merriam Webster API key was not set")
-
-	}
-	return Merriam{api_key}, nil
-}
-
 func PrintDefinitions(defs []WordDef) {
 	for _, w := range defs {
 		fmt.Println(w.Word)
@@ -60,6 +51,16 @@ func PrintDefinitions(defs []WordDef) {
 // Merriam Webster API implementation
 type Merriam struct {
 	api_key string
+}
+
+// Creates a new Merriam struct. Returns an error if MERRIAM_API_KEY is not an env variable
+func NewMerriam() (Merriam, error) {
+	api_key := os.Getenv("MERRIAM_API_KEY")
+	if api_key == "" {
+		return Merriam{}, errors.New("Merriam Webster API key was not set")
+
+	}
+	return Merriam{api_key}, nil
 }
 
 func (m Merriam) getUrl(word string) string {
@@ -128,6 +129,7 @@ func (m Merriam) GetDefinition(word string) (WordDef, error) {
 	return res, nil
 }
 
+// Get the definitions for words using the Merriam API
 func (m Merriam) GetDefinitions(words []string) []WordDef {
 	res := make([]WordDef, 0)
 	for _, w := range words {
