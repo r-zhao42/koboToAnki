@@ -12,7 +12,7 @@ import (
 	"time"
 )
 
-const ANKICONNECT_URL = "http://127.0.0.1:8765"
+const ANKICONNECT_URL = "http://localhost:8765"
 
 // Represents an Anki Notes
 type Note struct {
