@@ -1,8 +1,11 @@
-module koboToAnki/m
+module koboToAnki
 
 go 1.24.2
 
-require modernc.org/sqlite v1.37.0
+require (
+	github.com/joho/godotenv v1.5.1
+	modernc.org/sqlite v1.37.0
+)
 
 require (
 	github.com/dustin/go-humanize v1.0.1 // indirect
