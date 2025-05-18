@@ -1,4 +1,4 @@
-module koboToAnki
+module github.com/r-zhao42/koboToAnki
 
 go 1.24.2
 

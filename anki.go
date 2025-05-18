@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"koboToAnki/dict"
+	"github.com/r-zhao42/koboToAnki/dict"
 	"net/http"
 	"os/exec"
 	"path"

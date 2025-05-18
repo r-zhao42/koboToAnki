@@ -3,8 +3,8 @@ package main
 import (
 	"flag"
 	"fmt"
-	"koboToAnki/dict"
-	"koboToAnki/kobo"
+	"github.com/r-zhao42/koboToAnki/dict"
+	"github.com/r-zhao42/koboToAnki/kobo"
 	"log"
 	"os"
 
